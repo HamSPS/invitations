@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
   },
-  allowedDevOrigins: ['192.168.1.42', 'https://attendant-wife-lid.ngrok-free.dev'],
+  allowedDevOrigins: ['192.168.1.42', 'attendant-wife-lid.ngrok-free.dev'],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
