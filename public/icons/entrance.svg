@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 95" fill="none" stroke="#4f573d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Arch pillars & top beam -->
+  <path d="M22 86 L22 24 C38 15, 72 15, 88 24 L88 86" />
+  <path d="M16 86 L30 86 M78 86 L94 86" />
+  <!-- Draped curtain sweeping from top-left to right pillar -->
+  <path d="M36 18 C48 34, 66 44, 88 52 C79 64, 76 75, 74 86" fill="rgba(127,140,114,0.1)" />
+  <path d="M46 18 C58 31, 73 41, 88 47" />
+  <path d="M58 18 C68 28, 79 36, 88 41" />
+  <path d="M88 52 C83 65, 81 76, 82 86" />
+  <!-- Left pillar curtain drape -->
+  <path d="M26 24 C29 44, 27 65, 25 86" />
+  <!-- Top-left & top floral cluster -->
+  <circle cx="22" cy="24" r="5" fill="rgba(127,140,114,0.18)" />
+  <circle cx="30" cy="20" r="4.2" fill="rgba(127,140,114,0.18)" />
+  <circle cx="17" cy="31" r="4" fill="rgba(127,140,114,0.18)" />
+  <circle cx="25" cy="32" r="3.6" />
+  <circle cx="38" cy="18" r="3.5" />
+  <circle cx="76" cy="20" r="4" fill="rgba(127,140,114,0.18)" />
+  <circle cx="84" cy="25" r="4.2" fill="rgba(127,140,114,0.18)" />
+  <circle cx="89" cy="51" r="3.6" fill="rgba(127,140,114,0.22)" />
+  <!-- Hanging foliage vines -->
+  <path d="M14 26 L9 22 M14 35 L8 37 M19 40 L17 48 M33 13 L35 8 M82 16 L87 11" />
+</svg>

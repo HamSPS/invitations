@@ -43,6 +43,161 @@ body {
   flex-direction: column;
 }
 
+.music-vinyl-btn {
+  position: fixed;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 40;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(250, 247, 239, 0.78);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(48, 56, 38, 0.22);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.music-vinyl-btn:hover,
+.music-vinyl-btn:focus-visible {
+  transform: scale(1.06);
+  box-shadow: 0 10px 28px rgba(48, 56, 38, 0.3);
+}
+
+.music-progress-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.music-progress-track {
+  fill: none;
+  stroke: rgba(127, 140, 114, 0.26);
+  stroke-width: 2.5;
+}
+
+.music-progress-bar {
+  fill: none;
+  stroke: #5c664c;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+.music-vinyl-disc {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      from 0deg,
+      #1f231b 0deg,
+      #343a2e 40deg,
+      #1b1f18 90deg,
+      #2f3529 140deg,
+      #1f231b 180deg,
+      #343a2e 220deg,
+      #1b1f18 270deg,
+      #2f3529 320deg,
+      #1f231b 360deg
+    );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+  display: grid;
+  place-items: center;
+  animation: vinyl-spin 4.5s linear infinite;
+  animation-play-state: paused;
+}
+
+.music-vinyl-disc.is-playing {
+  animation-play-state: running;
+}
+
+.music-vinyl-disc.is-paused {
+  animation-play-state: paused;
+}
+
+@keyframes vinyl-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.music-vinyl-grooves {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    circle at center,
+    transparent 0px,
+    transparent 2px,
+    rgba(255, 255, 255, 0.07) 2.5px,
+    transparent 3.5px
+  );
+  pointer-events: none;
+}
+
+.music-vinyl-label {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #faf7ef 0%, #aeb99f 65%, #7f8c72 100%);
+  border: 1px solid rgba(40, 46, 34, 0.45);
+  display: grid;
+  place-items: center;
+}
+
+.music-vinyl-label::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #4f573d;
+}
+
+.music-vinyl-hole {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #1f231b;
+}
+
+.music-tonearm {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid #8c967d;
+  border-right: 2px solid #8c967d;
+  border-radius: 0 3px 0 0;
+  transform-origin: top right;
+  transform: rotate(-28deg);
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+
+.music-tonearm.is-playing {
+  transform: rotate(6deg);
+}
+
 /* ---------- Envelope scene ---------- */
 
 .envelope-scene {
@@ -109,6 +264,134 @@ body {
 }
 
 /* ---------- Open envelope ---------- */
+
+.reveal-stage-showcase {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 920px;
+}
+
+.reveal-stage-showcase .open-stage {
+  z-index: 2;
+  width: min(72vw, 430px);
+}
+
+.envelope-polaroids {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.polaroid-wing {
+  position: absolute;
+  pointer-events: auto;
+  width: clamp(92px, 24vw, 168px);
+  background: #faf7ef;
+  border: 1px solid rgba(127, 140, 114, 0.25);
+  border-radius: 6px;
+  padding: clamp(5px, 1.2vw, 9px);
+  padding-bottom: clamp(18px, 3.6vw, 28px);
+  box-shadow: 0 16px 34px rgba(52, 60, 42, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.polaroid-wing-photo {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #e6e1d3;
+}
+
+.polaroid-wing-photo img {
+  object-fit: cover;
+}
+
+.polaroid-wing-caption {
+  font-family: "Sloop Script Three", Georgia, serif;
+  font-size: clamp(0.85rem, 2.4vw, 1.15rem);
+  line-height: 1;
+  color: #5c664c;
+  text-align: center;
+}
+
+.polaroid-wing.slot-left-top {
+  left: clamp(2px, 3vw, 28px);
+  top: 3%;
+}
+
+.polaroid-wing.slot-left-bottom {
+  left: clamp(4px, 4.5vw, 44px);
+  bottom: 6%;
+}
+
+.polaroid-wing.slot-right-top {
+  right: clamp(2px, 3vw, 28px);
+  top: 4%;
+}
+
+.polaroid-wing.slot-right-bottom {
+  right: clamp(4px, 4.5vw, 44px);
+  bottom: 5%;
+}
+
+.polaroid-lightbox-card {
+  background: #faf7ef;
+  border-radius: 10px;
+  padding: 12px 12px 20px;
+  box-shadow: 0 30px 80px rgba(30, 35, 24, 0.45);
+  max-width: min(88vw, 400px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.polaroid-lightbox-photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.polaroid-lightbox-photo img {
+  object-fit: cover;
+}
+
+.polaroid-lightbox-caption {
+  margin: 0;
+  font-family: "Sloop Script Three", Georgia, serif;
+  font-size: 1.8rem;
+  line-height: 1;
+  color: #4f573d;
+}
+
+.polaroid-lightbox-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.polaroid-nav-btn {
+  border: 1px solid rgba(127, 140, 114, 0.4);
+  background: rgba(255, 255, 255, 0.8);
+  color: #4f573d;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
 
 .open-stage {
   position: relative;
@@ -885,6 +1168,138 @@ body {
   filter: saturate(0.85) contrast(0.98);
 }
 
+/* Section 5 — Wedding Agenda Timeline */
+
+.section-agenda {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #4f573d;
+  padding: 1.5rem 0.85rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 15%, rgba(168, 181, 155, 0.26), transparent 45%),
+    radial-gradient(circle at 82% 85%, rgba(168, 181, 155, 0.24), transparent 45%);
+}
+
+.agenda-card-shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 660px;
+  background: rgba(250, 247, 239, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(127, 140, 114, 0.35);
+  border-radius: 24px;
+  padding: 6px;
+  box-shadow:
+    0 24px 60px rgba(72, 82, 58, 0.14),
+    0 2px 8px rgba(72, 82, 58, 0.06);
+}
+
+.agenda-card-inner {
+  width: 100%;
+  border: 1px solid rgba(127, 140, 114, 0.22);
+  border-radius: 19px;
+  padding: clamp(1.25rem, 3vw, 2.2rem) clamp(0.75rem, 2.5vw, 1.8rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.agenda-script-title {
+  margin: 0;
+  font-family: "Sloop Script Three", Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  font-size: clamp(2.3rem, 8.5vw, 3.5rem);
+  line-height: 1.05;
+  color: #4f573d;
+}
+
+.agenda-timeline {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.25rem 0;
+}
+
+.agenda-timeline::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: #6f7c60;
+}
+
+.agenda-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 28px 1fr;
+  align-items: center;
+  min-height: 76px;
+}
+
+.agenda-node {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #5c664c;
+  border: 2.5px solid #faf7ef;
+  box-shadow: 0 0 0 1.5px #5c664c;
+  justify-self: center;
+  z-index: 2;
+}
+
+.agenda-side-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(0.45rem, 2vw, 0.9rem);
+  padding-right: clamp(0.35rem, 1.5vw, 0.75rem);
+  text-align: center;
+}
+
+.agenda-side-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(0.45rem, 2vw, 0.9rem);
+  padding-left: clamp(0.35rem, 1.5vw, 0.75rem);
+  text-align: center;
+}
+
+.agenda-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+}
+
+.agenda-time {
+  font-weight: 700;
+  font-size: clamp(0.88rem, 2.5vw, 1.05rem);
+  color: #3f4730;
+  letter-spacing: 0.02em;
+}
+
+.agenda-label {
+  font-size: clamp(0.76rem, 2.1vw, 0.94rem);
+  line-height: 1.25;
+  color: #4f573d;
+  max-width: 9.5rem;
+}
+
+.agenda-svg {
+  width: clamp(54px, 14vw, 76px);
+  height: clamp(54px, 14vw, 76px);
+  color: #4f573d;
+  flex-shrink: 0;
+}
+
 /* Section 4 — wedding details explore */
 
 .tray-composition {
@@ -968,6 +1383,31 @@ body {
 }
 
 /* Section 6 — outro */
+
+.section-outro {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(168, 181, 155, 0.25), transparent 48%),
+    radial-gradient(circle at 80% 80%, rgba(168, 181, 155, 0.25), transparent 48%);
+}
+
+.outro-script {
+  margin: 0;
+  font-family: "Sloop Script Three", Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  font-size: clamp(2.8rem, 11vw, 4.6rem);
+  line-height: 1.1;
+  color: var(--sage-deep);
+}
+
+.outro-date {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
 
 .outro-eyebrow {
   margin: 0;

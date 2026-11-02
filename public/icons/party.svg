@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 100" fill="none" stroke="#4f573d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Floating heart & clink sparkles -->
+  <path d="M55 21 C53 17, 48 18, 49 22 C50 26, 55 28, 55 28 C55 28, 60 26, 61 22 C62 18, 57 17, 55 21 Z" fill="#4f573d" />
+  <path d="M43 16 L40 12 M67 16 L70 12 M55 13 L55 9" />
+  <!-- Left champagne flute (tilted right) -->
+  <path d="M32 28 L49 32 L43 57 C41 63, 31 61, 30 54 Z" fill="rgba(127,140,114,0.12)" />
+  <path d="M31 41 L47 44" />
+  <path d="M36 61 L30 82 M22 80 L38 84" />
+  <!-- Right champagne flute (tilted left) -->
+  <path d="M55 34 L72 29 L75 54 C74 62, 64 64, 61 57 Z" fill="rgba(127,140,114,0.12)" />
+  <path d="M57 45 L73 41" />
+  <path d="M68 61 L74 82 M66 84 L82 80" />
+</svg>

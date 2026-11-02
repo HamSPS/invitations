@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
@@ -59,7 +59,42 @@ export default function Page() {
   const [hostTab, setHostTab] = useState<HostTab>("both");
   const [activeCeremony, setActiveCeremony] = useState<CeremonySlot>("baci");
   const [copiedVenue, setCopiedVenue] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [musicProgress, setMusicProgress] = useState(0);
+  const [activePolaroid, setActivePolaroid] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const reduceMotion = useReducedMotion();
+
+  const updateMusicProgress = () => {
+    const audio = audioRef.current;
+    if (!audio || !audio.duration || Number.isNaN(audio.duration)) return;
+    setMusicProgress(audio.currentTime / audio.duration);
+  };
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    let rafId = 0;
+    const tick = () => {
+      updateMusicProgress();
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [isPlaying]);
+
+  const toggleMusic = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
+    } else {
+      audio.pause();
+      setIsPlaying(false);
+    }
+  };
 
   const copyVenue = async () => {
     try {
@@ -87,10 +122,80 @@ export default function Page() {
     if (phase !== "closed") return;
     setOverlay(null);
     setPhase(reduceMotion ? "details" : "open");
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.volume = 0.6;
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
+    }
   };
+
+  const ringRadius = 24;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference * (1 - musicProgress);
 
   return (
     <main className="invitation">
+      <audio
+        ref={audioRef}
+        src="/music.mp3"
+        loop
+        preload="auto"
+        onTimeUpdate={updateMusicProgress}
+        onLoadedMetadata={updateMusicProgress}
+      />
+
+      {phase !== "closed" && (
+        <button
+          type="button"
+          onClick={toggleMusic}
+          className="music-vinyl-btn"
+          aria-label={isPlaying ? "หยุดเพลงชั่วคราว" : "เล่นเพลงต่อ"}
+          aria-pressed={isPlaying}
+        >
+          {/* Circular playback progress ring around the vinyl */}
+          <svg
+            viewBox="0 0 54 54"
+            className="music-progress-ring"
+            aria-hidden="true"
+          >
+            <circle
+              cx="27"
+              cy="27"
+              r={ringRadius}
+              className="music-progress-track"
+            />
+            <circle
+              cx="27"
+              cy="27"
+              r={ringRadius}
+              className="music-progress-bar"
+              strokeDasharray={ringCircumference}
+              strokeDashoffset={ringOffset}
+            />
+          </svg>
+
+          {/* Spinning vinyl record disc */}
+          <span
+            className={`music-vinyl-disc${isPlaying ? " is-playing" : " is-paused"}`}
+            aria-hidden="true"
+          >
+            <span className="music-vinyl-grooves" />
+            <span className="music-vinyl-label">
+              <span className="music-vinyl-hole" />
+            </span>
+          </span>
+
+          {/* Subtle tonearm / pause badge */}
+          <span
+            className={`music-tonearm${isPlaying ? " is-playing" : ""}`}
+            aria-hidden="true"
+          />
+        </button>
+      )}
       <AnimatePresence mode="wait">
         {phase === "closed" && (
           <motion.section
@@ -206,45 +311,98 @@ export default function Page() {
             animate={{ opacity: 1 }}
             transition={{ duration: reduceMotion ? 0 : 0.5 }}
           >
-            {/* Section 1 — opened envelope with card, like the video reveal */}
+            {/* Section 1 — opened envelope with card + Polaroid side wings */}
             <section className="snap-section section-reveal-stage">
-              <div className="open-stage">
-                <div className="envelope-back">
-                  <Image
-                    src={images.envelope2}
-                    alt=""
-                    fill
-                    sizes="(max-width: 640px) 88vw, 480px"
-                  />
-                  <div className="envelope-back-couple" aria-hidden="true">
+              <div className="reveal-stage-showcase">
+                <div className="envelope-polaroids" aria-label="แกลเลอรีภาพพรีเวดดิ้ง">
+                  {invitation.galleries.map((photo, idx) => {
+                    const isLeft = photo.slot.startsWith("left");
+                    return (
+                      <motion.button
+                        key={photo.id}
+                        type="button"
+                        className={`polaroid-wing slot-${photo.slot}`}
+                        onClick={() => setActivePolaroid(idx)}
+                        initial={{
+                          opacity: 0,
+                          x: isLeft ? 70 : -70,
+                          y: 24,
+                          scale: 0.72,
+                          rotate: 0,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          x: 0,
+                          y: 0,
+                          scale: 1,
+                          rotate: photo.rotate,
+                        }}
+                        whileHover={{
+                          scale: 1.07,
+                          rotate: isLeft ? -2 : 2,
+                          zIndex: 6,
+                        }}
+                        transition={{
+                          duration: reduceMotion ? 0 : 0.75,
+                          delay: reduceMotion ? 0 : 0.15 + idx * 0.12,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                        aria-label={`ดูรูปภาพ ${photo.caption}`}
+                      >
+                        <span className="polaroid-wing-photo">
+                          <Image
+                            src={photo.src}
+                            alt={photo.caption}
+                            fill
+                            sizes="(max-width: 640px) 28vw, 180px"
+                          />
+                        </span>
+                        <span className="polaroid-wing-caption">
+                          {photo.caption}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+
+                <div className="open-stage">
+                  <div className="envelope-back">
                     <Image
-                      src={images.envelope2Couple}
+                      src={images.envelope2}
+                      alt=""
+                      fill
+                      sizes="(max-width: 640px) 88vw, 480px"
+                    />
+                    <div className="envelope-back-couple" aria-hidden="true">
+                      <Image
+                        src={images.envelope2Couple}
+                        alt=""
+                        fill
+                        sizes="(max-width: 640px) 88vw, 480px"
+                      />
+                    </div>
+                  </div>
+                  <div className="envelope-front" aria-hidden="true">
+                    <Image
+                      src={images.envelope2Front}
                       alt=""
                       fill
                       sizes="(max-width: 640px) 88vw, 480px"
                     />
                   </div>
-                </div>
-                <div className="envelope-front" aria-hidden="true">
-                  <Image
-                    src={images.envelope2Front}
-                    alt=""
-                    fill
-                    sizes="(max-width: 640px) 88vw, 480px"
-                  />
-                </div>
-                <div className="letter-card letter-card-front">
-                  <div className="heart-card">
-                    <Image
-                      src={images.heart}
-                      alt=""
-                      fill
-                      sizes="(max-width: 640px) 70vw, 360px"
-                    />
-                    <div className="heart-card-text">
-                      <p className="letter-eyebrow">We&apos;re getting</p>
-                      <p className="letter-script">Married</p>
-                      <p className="letter-date">{invitation.date}</p>
+                  <div className="letter-card letter-card-front">
+                    <div className="heart-card">
+                      <Image
+                        src={images.heart}
+                        alt=""
+                        fill
+                        sizes="(max-width: 640px) 70vw, 360px"
+                      />
+                      <div className="heart-card-text">
+                        <p className="letter-eyebrow">We&apos;re getting</p>
+                        <p className="letter-script">Married</p>
+                        <p className="letter-date">{invitation.date}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -349,6 +507,244 @@ export default function Page() {
             {/* Section 3 — Lao Formal Invitation */}
             <section className="snap-section section-lao-card">
               <style>{`
+                .music-vinyl-btn {
+                  position: fixed;
+                  top: 0.9rem;
+                  right: 0.9rem;
+                  z-index: 40;
+                  width: 54px;
+                  height: 54px;
+                  padding: 0;
+                  border: 0;
+                  border-radius: 50%;
+                  background: rgba(250, 247, 239, 0.78);
+                  backdrop-filter: blur(8px);
+                  display: grid;
+                  place-items: center;
+                  cursor: pointer;
+                  box-shadow: 0 8px 24px rgba(48, 56, 38, 0.22);
+                  transition: transform 0.22s ease, box-shadow 0.22s ease;
+                }
+                .music-vinyl-btn:hover,
+                .music-vinyl-btn:focus-visible {
+                  transform: scale(1.06);
+                  box-shadow: 0 10px 28px rgba(48, 56, 38, 0.3);
+                }
+                .music-progress-ring {
+                  position: absolute;
+                  inset: 0;
+                  width: 100%;
+                  height: 100%;
+                  transform: rotate(-90deg);
+                  pointer-events: none;
+                }
+                .music-progress-track {
+                  fill: none;
+                  stroke: rgba(127, 140, 114, 0.26);
+                  stroke-width: 2.5;
+                }
+                .music-progress-bar {
+                  fill: none;
+                  stroke: #5c664c;
+                  stroke-width: 2.8;
+                  stroke-linecap: round;
+                  transition: stroke-dashoffset 0.1s linear;
+                }
+                .music-vinyl-disc {
+                  position: relative;
+                  width: 40px;
+                  height: 40px;
+                  border-radius: 50%;
+                  background: conic-gradient(
+                    from 0deg,
+                    #1f231b 0deg,
+                    #343a2e 40deg,
+                    #1b1f18 90deg,
+                    #2f3529 140deg,
+                    #1f231b 180deg,
+                    #343a2e 220deg,
+                    #1b1f18 270deg,
+                    #2f3529 320deg,
+                    #1f231b 360deg
+                  );
+                  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 2px 6px rgba(0, 0, 0, 0.35);
+                  display: grid;
+                  place-items: center;
+                  animation: vinyl-spin 4.5s linear infinite;
+                  animation-play-state: paused;
+                }
+                .music-vinyl-disc.is-playing { animation-play-state: running; }
+                .music-vinyl-disc.is-paused { animation-play-state: paused; }
+                @keyframes vinyl-spin {
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                }
+                .music-vinyl-grooves {
+                  position: absolute;
+                  inset: 4px;
+                  border-radius: 50%;
+                  background: repeating-radial-gradient(
+                    circle at center,
+                    transparent 0px,
+                    transparent 2px,
+                    rgba(255, 255, 255, 0.07) 2.5px,
+                    transparent 3.5px
+                  );
+                  pointer-events: none;
+                }
+                .music-vinyl-label {
+                  position: relative;
+                  width: 15px;
+                  height: 15px;
+                  border-radius: 50%;
+                  background: radial-gradient(circle, #faf7ef 0%, #aeb99f 65%, #7f8c72 100%);
+                  border: 1px solid rgba(40, 46, 34, 0.45);
+                  display: grid;
+                  place-items: center;
+                }
+                .music-vinyl-label::after {
+                  content: "";
+                  position: absolute;
+                  top: 2px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  width: 3px;
+                  height: 3px;
+                  border-radius: 50%;
+                  background: #4f573d;
+                }
+                .music-vinyl-hole {
+                  width: 4px;
+                  height: 4px;
+                  border-radius: 50%;
+                  background: #1f231b;
+                }
+                .music-tonearm {
+                  position: absolute;
+                  top: 6px;
+                  right: 6px;
+                  width: 12px;
+                  height: 12px;
+                  border-top: 2px solid #8c967d;
+                  border-right: 2px solid #8c967d;
+                  border-radius: 0 3px 0 0;
+                  transform-origin: top right;
+                  transform: rotate(-28deg);
+                  transition: transform 0.3s ease;
+                  pointer-events: none;
+                }
+                .music-tonearm.is-playing { transform: rotate(6deg); }
+                .reveal-stage-showcase {
+                  position: relative;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  width: 100%;
+                  max-width: 920px;
+                }
+                .reveal-stage-showcase .open-stage {
+                  z-index: 2;
+                  width: min(72vw, 430px);
+                }
+                .envelope-polaroids {
+                  position: absolute;
+                  inset: 0;
+                  pointer-events: none;
+                  z-index: 6;
+                }
+                .polaroid-wing {
+                  position: absolute;
+                  pointer-events: auto;
+                  width: clamp(92px, 24vw, 168px);
+                  background: #faf7ef;
+                  border: 1px solid rgba(127, 140, 114, 0.25);
+                  border-radius: 6px;
+                  padding: clamp(5px, 1.2vw, 9px);
+                  padding-bottom: clamp(18px, 3.6vw, 28px);
+                  box-shadow: 0 16px 34px rgba(52, 60, 42, 0.22);
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.35rem;
+                  cursor: pointer;
+                }
+                .polaroid-wing-photo {
+                  position: relative;
+                  display: block;
+                  width: 100%;
+                  aspect-ratio: 3 / 4;
+                  overflow: hidden;
+                  border-radius: 3px;
+                  background: #e6e1d3;
+                }
+                .polaroid-wing-photo img {
+                  object-fit: cover;
+                }
+                .polaroid-wing-caption {
+                  font-family: "Sloop Script Three", Georgia, serif;
+                  font-size: clamp(0.85rem, 2.4vw, 1.15rem);
+                  line-height: 1;
+                  color: #5c664c;
+                  text-align: center;
+                }
+                .polaroid-wing.slot-left-top {
+                  left: clamp(2px, 3vw, 28px);
+                  top: 3%;
+                }
+                .polaroid-wing.slot-left-bottom {
+                  left: clamp(4px, 4.5vw, 44px);
+                  bottom: 6%;
+                }
+                .polaroid-wing.slot-right-top {
+                  right: clamp(2px, 3vw, 28px);
+                  top: 4%;
+                }
+                .polaroid-wing.slot-right-bottom {
+                  right: clamp(4px, 4.5vw, 44px);
+                  bottom: 5%;
+                }
+                .polaroid-lightbox-card {
+                  background: #faf7ef;
+                  border-radius: 10px;
+                  padding: 12px 12px 20px;
+                  box-shadow: 0 30px 80px rgba(30, 35, 24, 0.45);
+                  max-width: min(88vw, 400px);
+                  width: 100%;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  gap: 0.75rem;
+                }
+                .polaroid-lightbox-photo {
+                  position: relative;
+                  width: 100%;
+                  aspect-ratio: 2 / 3;
+                  border-radius: 6px;
+                  overflow: hidden;
+                }
+                .polaroid-lightbox-photo img {
+                  object-fit: cover;
+                }
+                .polaroid-lightbox-caption {
+                  margin: 0;
+                  font-family: "Sloop Script Three", Georgia, serif;
+                  font-size: 1.8rem;
+                  line-height: 1;
+                  color: #4f573d;
+                }
+                .polaroid-lightbox-nav {
+                  display: flex;
+                  align-items: center;
+                  gap: 0.75rem;
+                }
+                .polaroid-nav-btn {
+                  border: 1px solid rgba(127, 140, 114, 0.4);
+                  background: rgba(255, 255, 255, 0.8);
+                  color: #4f573d;
+                  border-radius: 999px;
+                  padding: 0.35rem 0.9rem;
+                  font-size: 0.78rem;
+                  cursor: pointer;
+                }
                 .section-lao-card {
                   font-family: var(--font-lao), "Noto Sans Lao Looped", "Phetsarath OT", sans-serif;
                   color: #4f573d;
@@ -629,6 +1025,142 @@ export default function Page() {
                 .lao-action-btn-button {
                   cursor: pointer; font-family: inherit;
                 }
+                .section-agenda {
+                  font-family: Georgia, "Times New Roman", serif;
+                  color: #4f573d;
+                  padding: 1.5rem 0.85rem;
+                  overflow: hidden;
+                  background:
+                    radial-gradient(circle at 18% 15%, rgba(168, 181, 155, 0.26), transparent 45%),
+                    radial-gradient(circle at 82% 85%, rgba(168, 181, 155, 0.24), transparent 45%);
+                }
+                .agenda-card-shell {
+                  position: relative;
+                  z-index: 1;
+                  width: 100%;
+                  max-width: 660px;
+                  background: rgba(250, 247, 239, 0.92);
+                  backdrop-filter: blur(8px);
+                  border: 1px solid rgba(127, 140, 114, 0.35);
+                  border-radius: 24px;
+                  padding: 6px;
+                  box-shadow: 0 24px 60px rgba(72, 82, 58, 0.14), 0 2px 8px rgba(72, 82, 58, 0.06);
+                }
+                .agenda-card-inner {
+                  width: 100%;
+                  border: 1px solid rgba(127, 140, 114, 0.22);
+                  border-radius: 19px;
+                  padding: clamp(1.25rem, 3vw, 2.2rem) clamp(0.75rem, 2.5vw, 1.8rem);
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  gap: 1.1rem;
+                }
+                .agenda-script-title {
+                  margin: 0;
+                  font-family: "Sloop Script Three", Georgia, "Times New Roman", serif;
+                  font-weight: 400;
+                  font-size: clamp(2.3rem, 8.5vw, 3.5rem);
+                  line-height: 1.05;
+                  color: #4f573d;
+                }
+                .agenda-timeline {
+                  position: relative;
+                  width: 100%;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.35rem;
+                  padding: 0.25rem 0;
+                }
+                .agenda-timeline::before {
+                  content: "";
+                  position: absolute;
+                  top: 28px;
+                  bottom: 28px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  width: 2px;
+                  background: #6f7c60;
+                }
+                .agenda-row {
+                  position: relative;
+                  display: grid;
+                  grid-template-columns: 1fr 28px 1fr;
+                  align-items: center;
+                  min-height: 76px;
+                }
+                .agenda-node {
+                  width: 16px;
+                  height: 16px;
+                  border-radius: 50%;
+                  background: #5c664c;
+                  border: 2.5px solid #faf7ef;
+                  box-shadow: 0 0 0 1.5px #5c664c;
+                  justify-self: center;
+                  z-index: 2;
+                }
+                .agenda-side-left {
+                  display: flex;
+                  align-items: center;
+                  justify-content: flex-end;
+                  gap: clamp(0.45rem, 2vw, 0.9rem);
+                  padding-right: clamp(0.35rem, 1.5vw, 0.75rem);
+                  text-align: center;
+                }
+                .agenda-side-right {
+                  display: flex;
+                  align-items: center;
+                  justify-content: flex-start;
+                  gap: clamp(0.45rem, 2vw, 0.9rem);
+                  padding-left: clamp(0.35rem, 1.5vw, 0.75rem);
+                  text-align: center;
+                }
+                .agenda-text {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  gap: 0.12rem;
+                }
+                .agenda-time {
+                  font-weight: 700;
+                  font-size: clamp(0.88rem, 2.5vw, 1.05rem);
+                  color: #3f4730;
+                  letter-spacing: 0.02em;
+                }
+                .agenda-label {
+                  font-size: clamp(0.76rem, 2.1vw, 0.94rem);
+                  line-height: 1.25;
+                  color: #4f573d;
+                  max-width: 9.5rem;
+                }
+                .agenda-svg {
+                  width: clamp(54px, 14vw, 76px);
+                  height: clamp(54px, 14vw, 76px);
+                  color: #4f573d;
+                  flex-shrink: 0;
+                }
+                .section-outro {
+                  position: relative;
+                  overflow: hidden;
+                  background:
+                    radial-gradient(circle at 20% 20%, rgba(168, 181, 155, 0.25), transparent 48%),
+                    radial-gradient(circle at 80% 80%, rgba(168, 181, 155, 0.25), transparent 48%);
+                }
+                .outro-script {
+                  margin: 0;
+                  font-family: "Sloop Script Three", Georgia, "Times New Roman", serif;
+                  font-weight: 400;
+                  font-size: clamp(2.8rem, 11vw, 4.6rem);
+                  line-height: 1.1;
+                  color: var(--sage-deep);
+                }
+                .outro-date {
+                  margin: 0;
+                  font-size: 0.8rem;
+                  letter-spacing: 0.32em;
+                  text-transform: uppercase;
+                  color: var(--muted);
+                }
               `}</style>
               <Image
                 src={images.lilly1}
@@ -654,8 +1186,8 @@ export default function Page() {
                     <span className="lao-crest" aria-hidden="true">
                       {invitation.shortNames}
                     </span>
-                    <p className="lao-eyebrow">WEDDING INVITATION</p>
-                    <h2 className="lao-title">{invitation.laoCard.title}</h2>
+                    <p className="lao-eyebrow"></p>
+                    <h2 className="lao-title">WEDDING INVITATION</h2>
                     <div className="lao-ornament" aria-hidden="true">
                       <span />
                       <i>♥</i>
@@ -664,7 +1196,7 @@ export default function Page() {
                   </div>
 
                   {/* Interactive Host Filter Tabs */}
-                  <div
+                  {/* <div
                     className="lao-tabs"
                     role="tablist"
                     aria-label="เลือกดูรายชื่อเจ้าภาพ"
@@ -707,7 +1239,7 @@ export default function Page() {
                         </button>
                       );
                     })}
-                  </div>
+                  </div> */}
 
                   {/* Animated Host Cards */}
                   <AnimatePresence mode="wait">
@@ -774,10 +1306,10 @@ export default function Page() {
                   </AnimatePresence>
 
                   {/* Invitation Message */}
-                  <div className="lao-invite-message">
+                  {/* <div className="lao-invite-message">
                     <p>{invitation.laoCard.inviteLine1}</p>
                     <p>{invitation.laoCard.inviteLine2}</p>
-                  </div>
+                  </div> */}
 
                   {/* Highlighted Couple Showcase */}
                   <motion.div
@@ -785,20 +1317,26 @@ export default function Page() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 260, damping: 20 }}
                   >
-                    <div className="lao-couple-names">
-                      <span>{invitation.laoCard.groomNameLao}</span>
-                      <span className="lao-couple-amp" aria-hidden="true">
-                        ແລະ
+                    <div className="lao-couple-names flex-col md:flex-row text-sm! whitespace-normal">
+                      <span>
+                        <span className="block">SOUKSAWAT SOULIVANH</span>
+                        <span className="text-xs">(Jack)</span>
                       </span>
-                      <span>{invitation.laoCard.brideNameLao}</span>
+                      <span className="lao-couple-amp" aria-hidden="true">
+                        &
+                      </span>
+                      <span>
+                        <span className="block">SENGSOULIPHONE PHILAVONG</span>
+                        <span className="text-xs">(Amy)</span>
+                      </span>
                     </div>
-                    <p className="lao-couple-eng">
+                    {/* <p className="lao-couple-eng">
                       {invitation.laoCard.coupleEng}
-                    </p>
+                    </p> */}
                   </motion.div>
 
                   {/* Interactive Schedule & Venue */}
-                  <div className="lao-event-meta">
+                  {/* <div className="lao-event-meta">
                     <p className="lao-event-date">
                       {invitation.laoCard.dateLao}
                     </p>
@@ -852,7 +1390,6 @@ export default function Page() {
                       </motion.p>
                     </AnimatePresence>
 
-                    {/* Website Action Button: Save Date */}
                     <div className="lao-action-bar">
                       <a
                         href={invitation.laoCard.calendarUrl}
@@ -864,12 +1401,95 @@ export default function Page() {
                         <span>ບັນທຶກວັນງານ</span>
                       </a>
                     </div>
+                  </div> */}
+                </div>
+              </motion.div>
+            </section>
+
+            {/* Section 4 — Wedding Agenda Timeline */}
+            <section className="snap-section section-agenda">
+              <Image
+                src={images.lilly1}
+                alt=""
+                width={290}
+                height={922}
+                className="lao-botanical lao-botanical-left"
+                aria-hidden="true"
+              />
+              <Image
+                src={images.lilly2}
+                alt=""
+                width={422}
+                height={980}
+                className="lao-botanical lao-botanical-right"
+                aria-hidden="true"
+              />
+
+              <motion.div className="agenda-card-shell" {...sectionReveal}>
+                <div className="agenda-card-inner">
+                  <h2 className="agenda-script-title">Wedding Agenda</h2>
+
+                  <div className="agenda-timeline">
+                    {invitation.agenda.map((item, idx) => (
+                      <motion.div
+                        key={item.id}
+                        className="agenda-row"
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.3 }}
+                        transition={{ duration: 0.4, delay: idx * 0.08 }}
+                      >
+                        {item.side === "left" ? (
+                          <>
+                            <div className="agenda-side-left">
+                              <div className="agenda-text">
+                                <span className="agenda-time">{item.time}</span>
+                                <span className="agenda-label">
+                                  {item.title}
+                                </span>
+                              </div>
+                              <Image
+                                src={item.icon}
+                                alt=""
+                                width={76}
+                                height={76}
+                                className="agenda-svg"
+                                aria-hidden="true"
+                              />
+                            </div>
+                            <span className="agenda-node" aria-hidden="true" />
+                            <div aria-hidden="true" />
+                          </>
+                        ) : (
+                          <>
+                            <div aria-hidden="true" />
+                            <span className="agenda-node" aria-hidden="true" />
+                            <div className="agenda-side-right">
+                              <Image
+                                src={item.icon}
+                                alt=""
+                                width={76}
+                                height={76}
+                                className="agenda-svg"
+                                aria-hidden="true"
+                              />
+                              <div className="agenda-text">
+                                <span className="agenda-time">{item.time}</span>
+                                <span className="agenda-label">
+                                  {item.title}
+                                </span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </motion.div>
+                    ))}
                   </div>
                 </div>
               </motion.div>
             </section>
 
-            {/* Section 4 — Location & Venue */}
+            {/* Section 5 — Location & Venue */}
             <section className="snap-section section-location">
               <Image
                 src={images.lilly2}
@@ -894,8 +1514,7 @@ export default function Page() {
                     <span className="location-pin-badge" aria-hidden="true">
                       <FiMapPin />
                     </span>
-                    <p className="lao-eyebrow">LOCATION &amp; VENUE</p>
-                    <h2 className="lao-title">ສະຖານທີ່ຈັດງານ</h2>
+                    <h2 className="lao-title">LOCATION &amp; VENUE</h2>
                     <div className="lao-ornament" aria-hidden="true">
                       <span />
                       <i>♥</i>
@@ -905,17 +1524,17 @@ export default function Page() {
 
                   <div className="location-venue-box">
                     <p className="location-venue-lao">
-                      {invitation.laoCard.venueTitleLao}
-                    </p>
-                    <p className="location-venue-eng">
                       {invitation.laoCard.venueTitleEng}
                     </p>
+                    {/* <p className="location-venue-eng">
+                      {invitation.laoCard.venueTitleEng}
+                    </p> */}
                     <p className="location-venue-address">
                       {invitation.laoCard.venueAddressLao}
                     </p>
                   </div>
 
-                  <div className="location-schedule-chips">
+                  {/* <div className="location-schedule-chips">
                     <span className="location-chip">
                       <FiCalendar aria-hidden="true" />
                       <span>{invitation.laoCard.dateLao}</span>
@@ -929,29 +1548,35 @@ export default function Page() {
                         {invitation.laoCard.ceremonyRight.label}
                       </span>
                     </span>
-                  </div>
+                  </div> */}
 
                   <div className="location-map-frame">
-                    <iframe
+                    {/* <iframe
                       title="ແຜນທີ່ ໂຮງແຮມ ແລນມາກ ແມ່ຂອງຮີເວີໄຊທ໌"
                       src={invitation.laoCard.venueEmbedUrl}
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
+                    /> */}
+
+                    <img
+                      src={images.lanmak.src}
+                      alt=""
+                      style={{ objectFit: "cover" }}
                     />
                   </div>
 
-                  <div className="lao-action-bar">
+                  <div className="lao-action-bar w-full">
                     <a
                       href={invitation.laoCard.venueMapUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="lao-action-btn lao-action-primary"
+                      className="lao-action-btn lao-action-primary w-full text-center! justify-center"
                     >
                       <FiNavigation aria-hidden="true" />
-                      <span>ເປີດ Google Maps ນຳທາງ</span>
+                      <span>ເປີດ Google Maps</span>
                     </a>
 
-                    <button
+                    {/* <button
                       type="button"
                       onClick={copyVenue}
                       className="lao-action-btn lao-action-secondary lao-action-btn-button"
@@ -967,11 +1592,13 @@ export default function Page() {
                           <span>ຄັດລອກຊື່ສະຖານທີ່</span>
                         </>
                       )}
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </motion.div>
             </section>
+
+            
 
             {/* Section 4 — Wedding details */}
             {/* <section className="snap-section section-details">
@@ -1025,18 +1652,32 @@ export default function Page() {
               </motion.div>
             </section> */}
 
-            {/* Section 6 — With love */}
-            {/* <section className="snap-section section-outro">
+            {/* Section 6 — Hope to see you */}
+            <section className="snap-section section-outro">
+              <Image
+                src={images.lilly1}
+                alt=""
+                width={290}
+                height={922}
+                className="lao-botanical lao-botanical-left"
+                aria-hidden="true"
+              />
+              <Image
+                src={images.lilly2}
+                alt=""
+                width={422}
+                height={980}
+                className="lao-botanical lao-botanical-right"
+                aria-hidden="true"
+              />
+
               <motion.div className="section-inner" {...sectionReveal}>
                 <p className="outro-eyebrow">With love</p>
                 <p className="outro-monogram" aria-hidden="true">
                   {invitation.shortNames}
                 </p>
-                <p className="outro-note">
-                  Should you have any questions, please get in touch with the
-                  bride and the groom via email.
-                </p>
-                <p className="outro-email">{invitation.contact}</p>
+                <h2 className="outro-script">Hope to see you</h2>
+                <p className="outro-date">{invitation.date}</p>
                 <button
                   type="button"
                   className="return-link"
@@ -1045,13 +1686,79 @@ export default function Page() {
                   Return
                 </button>
               </motion.div>
-            </section> */}
+            </section>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Explore overlays */}
       <AnimatePresence>
+        {activePolaroid !== null && invitation.galleries[activePolaroid] && (
+          <motion.div
+            key="overlay-polaroid"
+            className="overlay-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setActivePolaroid(null)}
+          >
+            <motion.div
+              className="polaroid-lightbox-card"
+              role="dialog"
+              aria-modal="true"
+              aria-label="ภาพพรีเวดดิ้ง"
+              initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="polaroid-lightbox-photo">
+                <Image
+                  src={invitation.galleries[activePolaroid].src}
+                  alt={invitation.galleries[activePolaroid].caption}
+                  fill
+                  sizes="(max-width: 640px) 88vw, 400px"
+                />
+              </div>
+              <p className="polaroid-lightbox-caption">
+                {invitation.galleries[activePolaroid].caption}
+              </p>
+              <div className="polaroid-lightbox-nav">
+                <button
+                  type="button"
+                  className="polaroid-nav-btn"
+                  onClick={() =>
+                    setActivePolaroid(
+                      (activePolaroid - 1 + invitation.galleries.length) %
+                        invitation.galleries.length,
+                    )
+                  }
+                >
+                  ‹ Prev
+                </button>
+                <button
+                  type="button"
+                  className="polaroid-nav-btn"
+                  onClick={() => setActivePolaroid(null)}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="polaroid-nav-btn"
+                  onClick={() =>
+                    setActivePolaroid(
+                      (activePolaroid + 1) % invitation.galleries.length,
+                    )
+                  }
+                >
+                  Next ›
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         {overlay === "details" && (
           <motion.div
             key="overlay-details"

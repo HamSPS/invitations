@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 100" fill="none" stroke="#4f573d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Bouquet flowers cluster -->
+  <circle cx="43" cy="26" r="6.5" fill="rgba(255,255,255,0.65)" />
+  <circle cx="56" cy="23" r="7" fill="rgba(255,255,255,0.65)" />
+  <circle cx="67" cy="29" r="6.5" fill="rgba(255,255,255,0.65)" />
+  <circle cx="35" cy="35" r="6" fill="rgba(255,255,255,0.65)" />
+  <circle cx="50" cy="34" r="6.8" fill="rgba(255,255,255,0.65)" />
+  <circle cx="63" cy="38" r="6" fill="rgba(255,255,255,0.65)" />
+  <!-- Flower centers -->
+  <circle cx="43" cy="26" r="1.6" fill="#4f573d" />
+  <circle cx="56" cy="23" r="1.6" fill="#4f573d" />
+  <circle cx="67" cy="29" r="1.6" fill="#4f573d" />
+  <circle cx="35" cy="35" r="1.6" fill="#4f573d" />
+  <circle cx="50" cy="34" r="1.6" fill="#4f573d" />
+  <circle cx="63" cy="38" r="1.6" fill="#4f573d" />
+  <!-- Wrapping paper cone -->
+  <path d="M24 38 L46 62 L55 62 L82 40 L69 32" fill="rgba(127,140,114,0.1)" />
+  <path d="M24 38 L33 31" />
+  <!-- Ribbon bow & stems -->
+  <path d="M46 62 C37 57, 34 66, 45 66 C39 73, 39 81, 41 88" />
+  <path d="M55 62 C64 57, 67 66, 56 66 C62 73, 61 81, 59 88" />
+  <path d="M47 63 L45 86 M51 63 L50 87 M54 63 L55 86" />
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115 90" fill="none" stroke="#4f573d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Fork on left -->
+  <path d="M13 18 L13 34 M16.5 18 L16.5 34 M20 18 L20 34" />
+  <path d="M13 34 C13 40, 20 40, 20 34" />
+  <path d="M15.2 39 L14 74 C14 77, 19 77, 19 74 L17.8 39" />
+  <!-- Outer & inner plate circles -->
+  <circle cx="57" cy="46" r="30" fill="rgba(255,255,255,0.45)" />
+  <circle cx="57" cy="46" r="21" />
+  <!-- Subtle plate rim curve -->
+  <path d="M44 33 A18 18 0 0 1 68 32" stroke-width="1.1" />
+  <path d="M70 58 A18 18 0 0 1 46 60" stroke-width="1.1" />
+  <!-- Knife on right -->
+  <path d="M97 17 C92 24, 92 38, 94 47 L98 47 L98 17 Z" fill="rgba(127,140,114,0.12)" />
+  <path d="M95 47 L94.5 74 C94.5 77, 99 77, 99 74 L98 47" />
+</svg>
