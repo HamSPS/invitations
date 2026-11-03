@@ -326,22 +326,22 @@ body {
 
 .polaroid-wing.slot-left-top {
   left: clamp(2px, 3vw, 28px);
-  top: 3%;
+  top: -30%;
 }
 
 .polaroid-wing.slot-left-bottom {
-  left: clamp(4px, 4.5vw, 44px);
-  bottom: 6%;
+  left: clamp(-14px, 0.5vw, 14px);
+  bottom: -6%;
 }
 
 .polaroid-wing.slot-right-top {
-  right: clamp(2px, 3vw, 28px);
-  top: 4%;
+  right: clamp(8px, 4vw, 34px);
+  top: -24%;
 }
 
 .polaroid-wing.slot-right-bottom {
-  right: clamp(4px, 4.5vw, 44px);
-  bottom: 5%;
+  right: clamp(-8px, 1.5vw, 20px);
+  bottom: -6%;
 }
 
 .polaroid-lightbox-card {
